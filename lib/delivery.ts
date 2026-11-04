@@ -15,6 +15,33 @@ export function normalizeCode(input: string) {
   return raw.length === 11 ? `${raw.slice(0,2)}-${raw.slice(2,4)}-${raw.slice(4,7)}-${raw.slice(7,9)}-${raw.slice(9)}` : input.trim().toUpperCase();
 }
 export function wellFormed(code: string) { return /^[A-Z]{2}-\d{2}-[A-Z0-9]{3}-[A-Z]{2}-\d{2}$/.test(code); }
+const segmentLengths = [2,2,3,2,2];
+const segmentNames = ["state","lga","district","area","unit"];
+export function searchQuery(input: string) {
+  const raw=input.toUpperCase().replace(/[\s-]/g, "");
+  const pieces:string[]=[];let offset=0;
+  for(const length of segmentLengths){if(offset>=raw.length)break;pieces.push(raw.slice(offset,offset+length));offset+=length;}
+  return pieces.join(" ") + (/[\s-]$/.test(input)&&raw.length<11?" ":"");
+}
+export function suggestionCode(input:string, segment:unknown, candidate:string):string|null {
+  if(!/^[A-Za-z0-9\s-]+$/.test(candidate))return null;
+  let raw=candidate.toUpperCase().replace(/[\s-]/g, "");
+  if(wellFormed(normalizeCode(raw)))return normalizeCode(raw);
+  const index=typeof segment==="string"?segmentNames.indexOf(segment):-1;
+  if(index<0)return null;
+  const prefix=input.toUpperCase().replace(/[\s-]/g, "");
+  const offset=segmentLengths.slice(0,index).reduce((a,b)=>a+b,0);
+  // The API may return the active segment alone or a completed prefix.
+  if(index>0&&raw.length<=segmentLengths[index]){
+    if(prefix.length<offset)return null;
+    raw=prefix.slice(0,offset)+raw;
+  }
+  const masks=[/[A-Z]/,/[A-Z]/,/\d/,/\d/,/[A-Z0-9]/,/[A-Z0-9]/,/[A-Z0-9]/,/[A-Z]/,/[A-Z]/,/\d/,/\d/];
+  if(!raw||raw.length>11||[...raw].some((char,i)=>!masks[i].test(char)))return null;
+  if(raw.length!==offset+segmentLengths[index])return null;
+  if(offset>0&&raw.slice(0,offset)!==prefix.slice(0,offset))return null;
+  return wellFormed(normalizeCode(raw))?normalizeCode(raw):searchQuery(raw)+" ";
+}
 export type Order = {
   id: string; name: string; phone: string; item: string; code: string;
   address: string; instructions: string; date: string;

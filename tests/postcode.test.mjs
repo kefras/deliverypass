@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 const asModule=source=>'data:text/javascript;base64,'+Buffer.from(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText).toString('base64');
 const modelUrl=asModule(readFileSync(new URL('../lib/delivery.ts',import.meta.url),'utf8'));
-const {normalizeCode,wellFormed}=await import(modelUrl);
+const {normalizeCode,wellFormed,searchQuery,suggestionCode}=await import(modelUrl);
 const routeSource=readFileSync(new URL('../app/api/postcode/route.ts',import.meta.url),'utf8').replace('@/lib/delivery',modelUrl);
 const {GET}=await import(asModule(routeSource));
 const request=query=>new Request('http://localhost/api/postcode?'+query);
@@ -15,6 +15,18 @@ test('normalizes human-entered postcodes and rejects legacy or malformed codes',
  assert.equal(wellFormed(normalizeCode('la11w06tc10')),true);
  assert.equal(wellFormed('100001'),false);
  assert.equal(wellFormed('LA-11-W06-TC-1'),false);
+});
+test('autocomplete formats partial queries and retains segment context',()=>{
+ assert.equal(searchQuery('FC-01-A'),'FC 01 A');
+ assert.equal(searchQuery('FC01A01'),'FC 01 A01');
+ assert.equal(suggestionCode('F','state','FC'),'FC ');
+ assert.equal(suggestionCode('FC 0','lga','01'),'FC 01 ');
+ assert.equal(suggestionCode('FC 01 A','district','A01'),'FC 01 A01 ');
+ assert.equal(suggestionCode('FC 01 A01 K','area','KP'),'FC 01 A01 KP ');
+ assert.equal(suggestionCode('FC 01 A01 KP 2','unit','27'),'FC-01-A01-KP-27');
+ assert.equal(suggestionCode('FC 01 A','district','FC 01 A01'),'FC 01 A01 ');
+ assert.equal(suggestionCode('FC 01 A','district','LA 01 A01'),null);
+ assert.equal(suggestionCode('F','state','<script>'),null);
 });
 test('demo and live route behaviour', async t=>{
  const originalKey=process.env.POSTCODE_API_KEY;
@@ -46,6 +58,10 @@ test('demo and live route behaviour', async t=>{
  });
  await t.test('validity false is not promoted to validated',async()=>{globalThis.fetch=async()=>Response.json({data:{valid:false}});const data=await(await GET(request('code=LA11W06TC10'))).json();assert.equal(data.valid,false);assert.equal(data.mode,'live');});
  await t.test('live search normalizes code results',async()=>{globalThis.fetch=async()=>Response.json({data:[{postcode:'LA11W06TC10'},{code:'bad'}]});const data=await(await GET(request('action=search&q=LA'))).json();assert.deepEqual(data.suggestions,[{code:'LA-11-W06-TC-10',label:'Select postcode'}]);});
+ await t.test('documented autocomplete envelope preserves partial suggestions and labels',async()=>{
+  globalThis.fetch=async url=>{assert.equal(url.searchParams.get('q'),'FC 01 A');return Response.json({data:{segment:'district',suggestions:[{code:'A01',label:'Example district'}]}});};
+  const data=await(await GET(request('action=search&q=FC01A'))).json();assert.deepEqual(data.suggestions,[{code:'FC 01 A01 ',label:'Example district'}]);
+ });
  await t.test('upstream permission errors do not fall back to sample data',async()=>{globalThis.fetch=async()=>new Response('',{status:403});const response=await GET(request('code=LA11W06TC10'));const data=await response.json();assert.equal(response.status,502);assert.equal(data.mode,'live');assert.equal(data.valid,undefined);assert.match(data.error,/access was refused/);});
  await t.test('upstream malformed response fails closed',async()=>{globalThis.fetch=async()=>Response.json({data:{valid:'true'}});const response=await GET(request('code=LA11W06TC10'));assert.equal(response.status,502);});
  await t.test('network errors do not fall back to sample data',async()=>{globalThis.fetch=async()=>{throw Error('network');};const response=await GET(request('code=LA11W06TC10'));assert.equal(response.status,502);assert.equal((await response.json()).mode,'live');});
