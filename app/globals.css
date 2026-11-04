@@ -7,3 +7,110 @@
 @media print{.sidebar,.topbar,.page-heading,.back-link,.app-footer,.detail-aside,.pass-actions,.toast{display:none!important}.main-shell{margin:0;width:100%}main{padding:0}.detail-grid{display:block}.panel{border:1px solid #aaa}.pass-code{print-color-adjust:exact}.notice{display:none}body{background:white}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 th{position:relative}.main-shell,main,.table-scroll{min-width:0}
+
+/* DeliveryPass brand palette: sunflower yellow, forest green, and white. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --ink: #123c2b;
+  --muted: #617268;
+  --green: #087443;
+  --line: #e1eae3;
+  --accent: #f7d637;
+}
+body, .main-shell { background: #ffffff; }
+.topbar { background: #ffffff; }
+.brand, .brand-icon { color: #087443; }
+.brand i { background: #e4bc00; }
+h1 > span { color: #087443; }
+.workspace { background: #f2f8f3; }
+.store-icon, .avatar, .top-avatar { background: #fbe775; color: #16442d; border-color: #eed357; }
+.workspace small, .profile small, .breadcrumb, .page-heading p,
+.section-heading p, .form-section-title p, .input-hint,
+.next-step p, .guide-step p, .local-note, .footnote { color: #617268; }
+.eyebrow, .nav-label { color: #617268; }
+.nav-item { color: #52685b; }
+.nav-item.active { background: #087443; color: #ffffff; }
+.nav-item:hover { background: #e8f5eb; color: #087443; }
+.nav-item.active:hover { background: #065d35; color: #ffffff; }
+.nav-count { background: #f7d637; color: #16442d; }
+.online-dot { background: #087443; }
+.postcode-card { background: #fff9d9; border-color: #efdfa0; }
+.postcode-card p { color: #6c6b42; }
+.postcode-card a { color: #087443; }
+.mini-flag i { background: #087443; }
+.mode-pill { background: #fff5be; border-color: #eed35c; color: #685300; }
+.mode-pill.live { background: #e2f4e8; color: #087443; border-color: #afd5bc; }
+.primary { background: #087443; border-color: #087443; color: #ffffff; }
+.primary:hover { background: #065d35; }
+.secondary { background: #ffffff; border-color: #bad0bf; color: #16603c; }
+.secondary:hover { background: #fff8d6; }
+button:focus-visible, a:focus-visible { outline-color: #d8ad00; }
+input:focus, textarea:focus, .searchbox:focus-within { outline-color: #087443; }
+.hero-banner { background: #f7d637; border-color: #ebc92a; }
+.hero-kicker, .hero-copy h2, .hero-copy button { color: #16442d; }
+.hero-copy p { color: #435735; }
+.orbit { border-color: #ba9b2355; }
+.route-line { border-color: #8b822e; }
+.address-ticket { background: #ffffff; border-color: #ffffff; box-shadow: 0 13px 28px #74621f20; }
+.ticket-top, .ticket-code { color: #087443; }
+.ticket-top > svg, .ticket-bottom { color: #33754a; }
+.ticket-label { color: #617268; }
+.ticket-bottom .dot { background: #087443; }
+.ticket-divider { border-color: #c9decf; }
+.floating-pin { background: #087443; color: #ffffff; border-color: #218457; }
+.small-parcel { background: #ffffff; color: #087443; border-color: #e7e5c4; }
+.illustration-caption { color: #58602d; }
+.stat { background: #ffffff; border-color: #d7e5da; }
+.stat-top, .stat small { color: #617268; }
+.stat-top svg, .stat.ready .stat-top svg, .stat.sent .stat-top svg { color: #087443; }
+.stat.attention { background: #fff9d9; border-color: #efdfa0; }
+.stat.attention .stat-top svg { color: #8a6a00; }
+.stat strong { color: #123c2b; }
+.section-heading h2 span { background: #fff3a9; border-color: #ead373; color: #685300; }
+.tabs button { color: #617268; }
+.tabs button.selected { color: #087443; border-color: #087443; }
+.searchbox { border-color: #cbdcce; color: #617268; }
+.searchbox input::placeholder { color: #617268; }
+th { background: #eff7f1; color: #526b5c; }
+tbody tr { background: #ffffff; }
+tbody tr:hover { background: #fffbe5; }
+.customer-avatar.tone-0, .customer-avatar.tone-2 { background: #e3f3e7; color: #087443; }
+.customer-avatar.tone-1, .customer-avatar.tone-3 { background: #fff1a0; color: #6b5700; }
+.customer-cell small, .date-cell, .table-footer { color: #617268; }
+.postcode { color: #244f37; }
+.postcode-status { color: #087443; }
+.postcode-status.muted { color: #846600; }
+.badge.green { color: #086139; background: #e0f2e5; }
+.badge.blue { color: #ffffff; background: #28784c; }
+.badge.amber { color: #705800; background: #fff0a3; }
+.table-footer .dot { background: #087443; }
+.form-section-title > span, .step-icon { background: #fff0a3; border-color: #efda77; color: #295c36; }
+.delivery-form label { color: #345c42; }
+.delivery-form input, .delivery-form textarea { background: #ffffff; color: #244f37; border-color: #cbdcce; }
+.delivery-form input::placeholder, .delivery-form textarea::placeholder { color: #748379; }
+.postcode-input > svg, .optional { color: #617268; }
+.sample-helper { color: #617268; }
+.sample-helper button { background: #fff4b8; border-color: #ead373; color: #685300; }
+.suggestions button:hover { background: #fff8d6; }
+.suggestions small { color: #617268; }
+.field-success { color: #087443; }
+.form-tip { background: #f7d637; border-color: #ebc92a; }
+.tip-icon { color: #ffffff; background: #087443; }
+.form-tip .eyebrow, .form-tip h2 { color: #16442d; }
+.form-tip > p { color: #435735; }
+.tip-divider { border-color: #b49d3d66; }
+.notice { background: #fff9d9; border-color: #efdfa0; color: #6b590e; }
+.pass-code { background: #f7d637; }
+.pass-code > span, .pass-code small { color: #435735; }
+.pass-code strong { color: #16442d; }
+.detail-field > svg { color: #087443; }
+.detail-field span, .recipient span { color: #617268; }
+.detail-field p, .recipient strong { color: #244f37; }
+.dispatch-confirmation, .detail-note { color: #087443; }
+.empty { color: #617268; }
+.toast { background: #087443; }
+.toast button { color: #fff3a9; }
+.guide-step > span { color: #087443; }
+.app-footer { color: #617268; }
+.flag-text { color: #087443; }
