@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import ts from 'typescript';
+
+const asModule=source=>'data:text/javascript;base64,'+Buffer.from(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText).toString('base64');
+const modelUrl=asModule(readFileSync(new URL('../lib/delivery.ts',import.meta.url),'utf8'));
+const {normalizeCode,wellFormed}=await import(modelUrl);
+const routeSource=readFileSync(new URL('../app/api/postcode/route.ts',import.meta.url),'utf8').replace('@/lib/delivery',modelUrl);
+const {GET}=await import(asModule(routeSource));
+const request=query=>new Request('http://localhost/api/postcode?'+query);
+
+test('normalizes human-entered postcodes and rejects legacy or malformed codes',()=>{
+ assert.equal(normalizeCode('la 11 w06 tc 10'),'LA-11-W06-TC-10');
+ assert.equal(wellFormed(normalizeCode('la11w06tc10')),true);
+ assert.equal(wellFormed('100001'),false);
+ assert.equal(wellFormed('LA-11-W06-TC-1'),false);
+});
+test('demo and live route behaviour', async t=>{
+ const originalKey=process.env.POSTCODE_API_KEY;
+ const originalFetch=globalThis.fetch;
+ t.after(()=>{globalThis.fetch=originalFetch;if(originalKey===undefined)delete process.env.POSTCODE_API_KEY;else process.env.POSTCODE_API_KEY=originalKey;});
+ delete process.env.POSTCODE_API_KEY;
+ globalThis.fetch=()=>{throw Error('Demo must not contact upstream');};
+ await t.test('demo results remain explicitly labelled',async()=>{
+  const response=await GET(request('code=la11w06tc10'));const data=await response.json();
+  assert.equal(response.status,200);assert.equal(data.valid,true);assert.equal(data.mode,'demo');assert.equal(data.code,'LA-11-W06-TC-10');
+  const missing=await GET(request('code=LA-99-Z99-ZZ-99'));assert.equal((await missing.json()).valid,false);
+ });
+ await t.test('malformed code returns a useful client error',async()=>{const response=await GET(request('code=100001'));assert.equal(response.status,400);assert.match((await response.json()).error,/full postcode/);});
+ await t.test('search returns only matching fixture codes',async()=>{const data=await (await GET(request('action=search&q=FC03'))).json();assert.equal(data.suggestions.length,1);assert.equal(data.suggestions[0].code,'FC-03-B06-AG-12');});
+ process.env.POSTCODE_API_KEY='test-only-placeholder';
+ await t.test('live lookup uses the documented host, server header, and free L1',async()=>{
+  globalThis.fetch=async(url,options)=>{assert.equal(url.origin,'https://api.postcode.gov.ng');assert.equal(url.pathname,'/v1/lookup');assert.equal(url.searchParams.get('level'),'1');assert.equal(options.headers['X-API-Key'],'test-only-placeholder');return Response.json({data:{valid:true}});};
+  const data=await (await GET(request('code=LA11W06TC10'))).json();assert.equal(data.mode,'live');assert.equal(data.valid,true);assert.equal(JSON.stringify(data).includes('test-only-placeholder'),false);
+ });
+ await t.test('validity false is not promoted to validated',async()=>{globalThis.fetch=async()=>Response.json({data:{valid:false}});const data=await(await GET(request('code=LA11W06TC10'))).json();assert.equal(data.valid,false);assert.equal(data.mode,'live');});
+ await t.test('live search normalizes code results',async()=>{globalThis.fetch=async()=>Response.json({data:[{postcode:'LA11W06TC10'},{code:'bad'}]});const data=await(await GET(request('action=search&q=LA'))).json();assert.deepEqual(data.suggestions,[{code:'LA-11-W06-TC-10',label:'Select postcode'}]);});
+ await t.test('upstream permission errors do not fall back to sample data',async()=>{globalThis.fetch=async()=>new Response('',{status:403});const response=await GET(request('code=LA11W06TC10'));const data=await response.json();assert.equal(response.status,502);assert.equal(data.mode,'live');assert.equal(data.valid,undefined);assert.match(data.error,/access was refused/);});
+ await t.test('upstream malformed response fails closed',async()=>{globalThis.fetch=async()=>Response.json({data:{valid:'true'}});const response=await GET(request('code=LA11W06TC10'));assert.equal(response.status,502);});
+ await t.test('network errors do not fall back to sample data',async()=>{globalThis.fetch=async()=>{throw Error('network');};const response=await GET(request('code=LA11W06TC10'));assert.equal(response.status,502);assert.equal((await response.json()).mode,'live');});
+});
