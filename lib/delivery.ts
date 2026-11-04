@@ -46,7 +46,8 @@ export type Order = {
   id: string; name: string; phone: string; item: string; code: string;
   address: string; instructions: string; date: string;
   verification: PostcodeMode | "unchecked";
-  status: "Awaiting check" | "Ready to dispatch" | "Dispatched";
+  status: "Awaiting check" | "Ready to dispatch" | "Dispatched" | "Delivered" | "Archived";
+  version?: number;
 };
 export const initialOrders: Order[] = [
  {id:"DP-1048", name:"Ada Okafor", phone:"08000000001", item:"Everyday tote · 1 item", code:fixtures[0].code, address:"Sample address, Lagos",instructions:"Call on arrival. Please leave with the recipient.",date:"2026-11-04T09:15:00+01:00",verification:"demo",status:"Ready to dispatch"},

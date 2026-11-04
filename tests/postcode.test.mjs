@@ -6,7 +6,8 @@ import ts from 'typescript';
 const asModule=source=>'data:text/javascript;base64,'+Buffer.from(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText).toString('base64');
 const modelUrl=asModule(readFileSync(new URL('../lib/delivery.ts',import.meta.url),'utf8'));
 const {normalizeCode,wellFormed,searchQuery,suggestionCode}=await import(modelUrl);
-const routeSource=readFileSync(new URL('../app/api/postcode/route.ts',import.meta.url),'utf8').replace('@/lib/delivery',modelUrl);
+const securityUrl=asModule('export async function currentUser(){return {id:"unit-test-seller"}};export async function rateLimit(){};export function apiError(){return Response.json({error:"Denied"},{status:401})}');
+const routeSource=readFileSync(new URL('../app/api/postcode/route.ts',import.meta.url),'utf8').replace('@/lib/delivery',modelUrl).replace('@/lib/security',securityUrl);
 const {GET}=await import(asModule(routeSource));
 const request=query=>new Request('http://localhost/api/postcode?'+query);
 

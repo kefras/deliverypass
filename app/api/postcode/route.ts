@@ -1,3 +1,4 @@
+import { currentUser,rateLimit,apiError } from "@/lib/security";
 import { fixtures, normalizeCode, wellFormed, searchQuery, suggestionCode } from "@/lib/delivery";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +9,7 @@ export async function GET(request: Request) {
   const key = process.env.POSTCODE_API_KEY;
   const mode = !key ? "demo" : /^nipost_(pk_)?test_/.test(key) ? "sandbox" : "live";
   if (action === "config") return json({mode});
+  try {const user=await currentUser();await rateLimit("postcode",user.id,120,60);}catch(e){return apiError(e);}
   if (action !== "search" && action !== "lookup") return json({error:"Unsupported action."},400);
   const input = (params.get(action === "search" ? "q" : "code") ?? "").slice(0,80);
   const code = normalizeCode(input);

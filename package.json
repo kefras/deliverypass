@@ -15,11 +15,15 @@
     "dev:next": "next dev --hostname 127.0.0.1",
     "build:next": "next build",
     "typecheck": "tsc --noEmit",
-    "test:postcode": "node --test tests/postcode.test.mjs"
+    "test:postcode": "node --test tests/postcode.test.mjs",
+    "test:security": "node --test tests/security.test.mjs",
+    "start:next": "next start --hostname 0.0.0.0"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@neon/auth": "0.8.2",
+    "@neondatabase/serverless": "1.0.2",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

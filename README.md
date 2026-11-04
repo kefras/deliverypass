@@ -1,62 +1,86 @@
 # DeliveryPass
 
-A Next.js App Router prototype for Nigerian sellers: collect recipient details, check a postcode, prepare a delivery note, and record dispatch.
+A full-stack Next.js MVP for Nigerian sellers. DeliveryPass combines managed account authentication, private delivery orders, NIPOST postcode checks, and rider-ready delivery passes.
 
-**Demo:** https://deliverypass-ng-prototype.racingtarragon.chatgpt.site/
+## Included
 
-The hosted demo currently requires ChatGPT sign-in. Public access is awaiting explicit owner confirmation.
+- Sign-up and sign-in with managed Neon Auth (Better Auth).
+- Email verification gate before seller data or postcode requests are accessible.
+- Verification-code, forgot-password, and password-reset screens.
+- Private PostgreSQL orders scoped to the authenticated seller on every server operation.
+- Save a draft, edit and validate an order, dispatch, mark delivered, archive, and restore.
+- Store profile, password change, sign-out, and sign out other devices.
+- CSV export and printable/copyable delivery notes.
+- A separate `/demo` workspace with fictional, temporary data and no access to seller records.
 
-**Status:** working prototype; successful end-to-end NIPOST sandbox validation remains unverified. Authenticated requests returned HTTP 200, but the five documented sandbox codes returned `valid:false` / `status:not_found`, and autocomplete returned empty suggestions during testing.
+## NIPOST status
 
-## Run locally
+The real integration uses `/v1/search/autocomplete` and `/v1/lookup` at L1. Search supports individual postcode segments. During testing, authenticated sandbox requests returned HTTP 200 but the five documented sample codes returned `valid:false` / `status:not_found`, and autocomplete returned no suggestions. A successful external lookup remains unverified. Drafts can still be saved. Dispatch is allowed only after a successful server-side check. Demonstration checks never become production validations.
+
+## Local setup
 
 Requires Node.js 22.13 or newer.
 
 ```sh
-npm install
-npm run dev
+npm ci
 ```
 
-The hosted preview uses Vinext, a Next.js-compatible runtime for Cloudflare Workers. The pages and route handlers use Next.js App Router conventions. To use the conventional Next.js development server, run `npm run dev:next` instead.
+Copy `.env.example` to `.env.local` and configure:
 
-## Postcode API
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Server-only PostgreSQL connection string |
+| `NEON_AUTH_BASE_URL` | Managed Neon Auth endpoint |
+| `NEON_AUTH_COOKIE_SECRET` | Cryptographically random secret, at least 32 characters |
+| `APP_URL` | Exact application origin, e.g. `http://127.0.0.1:3000` |
+| `POSTCODE_API_KEY` | Server-only NIPOST test or live key |
 
-Without `POSTCODE_API_KEY`, the app uses four labelled fixtures. No request to the national API is made in demo mode. Sample customers, addresses, and phone numbers are fictional. Fixture matching is not live postcode verification.
+Enable Better Auth for your Neon project and add the app's exact origin to its trusted domains. Apply `migrations/001_mvp.sql` with the database owner's approval. The DeliveryPass database created for this project already has that migration applied.
 
-For conventional Next.js, copy `.env.example` to `.env.local` and set your own key. For the hosted Site, configure `POSTCODE_API_KEY` as a server-side secret in the hosting environment, then redeploy. Never prefix the key with `NEXT_PUBLIC_` or paste it into the application UI.
+```sh
+npm run dev:next
+```
 
-The server calls only `https://api.postcode.gov.ng`: autocomplete at `/v1/search/autocomplete` and basic L1 validation at `/v1/lookup`. The API key is sent through the `X-API-Key` header, never returned to the browser. L1 checks postcode validity only; street addresses and delivery instructions are entered by customers. Codes for test keys must come from the API sandbox dataset, which differs from live codes.
+Open `http://127.0.0.1:3000/auth/sign-in`. Create an account, then request and enter an email verification code. `/demo` works without an application account.
 
-With a `nipost_test_` key, the app displays **NIPOST sandbox** and saves checks as sandbox results. Use `FC-01-A01-KP-27` or `FC-01-A01-LR-01` to test. Existing demo orders retain their demo labels. With no key it remains in demo mode. Production checks use a live key after KYB approval.
+Secrets belong in `.env.local` or your hosting provider's environment settings. Never commit them or prefix them with `NEXT_PUBLIC_`. The supplied `.env.example` contains names only.
 
-Official documentation: https://docs.postcode.gov.ng/quickstart
-Access levels: https://docs.postcode.gov.ng/concepts/lookup-levels
+## Deployment
 
-## Pitch rehearsal (90 seconds)
+The conventional Next.js app is suitable for a Render Node web service. Use:
 
-1. Explain the problem: sellers and riders need a consistent address reference plus human delivery instructions.
-2. Show the dashboard and clearly labelled demonstration orders.
-3. Open a sample delivery pass and copy the rider note.
-4. Record dispatch and show filtering and search.
-5. Open New delivery and demonstrate a sandbox postcode check; disclose the current not-found response.
-6. Explain the next milestone: obtain working sandbox codes and test with sellers.
+- Build: `npm ci --include=dev && npm run build:next`
+- Start: `npm run start:next -- --port $PORT`
+- Health check: `/api/health`
+- Node: 22 or newer, satisfying `package.json` engines.
 
-To rehearse a successful simulated creation locally, leave the API key unset and use the clearly labelled demo dataset. Never present a simulated match as a successful NIPOST lookup.
+Configure all environment variables above on the host. Set `APP_URL` to the exact HTTPS deployment origin and add that origin to Neon's trusted domains. The frontend never receives the database password, cookie secret, or NIPOST secret.
 
-Say clearly that reduced delivery failures are a hypothesis to test with sellers, not a measured result.
+The existing Sites deployment uses the retained Vinext build (`npm run build`). Its platform access policy is separate from DeliveryPass accounts; a private Site still requires ChatGPT access before the application login.
 
-## Prototype boundaries
+## Security implementation
 
-Orders are saved in localStorage on the current browser; there is no database or cross-device order sharing. Reloading preserves orders when browser storage is available. Copy delivery note shares plain text through the clipboard; it does not send a message. Dispatch is a manual status update, not rider tracking. CSV export contains the currently filtered orders. The hosted demo currently requires ChatGPT sign-in. Use fictional customer details only. There is no multi-seller account system, shared order database, or cross-device order access.
+Passwords are handled by managed authentication, not by application tables or browser storage. Session cookies are HttpOnly; production cookies require HTTPS. Server authorization fetches a fresh provider session and checks email verification. Mutation routes validate the exact request origin. SQL uses parameterized queries and every order read/update includes the server-derived owner ID. Requests are validated with Zod, mutation bodies are size-limited, and authentication/order/postcode requests have database-backed throttling. Status transitions are checked server-side. Version checks prevent stale edits from silently overwriting changes. Auth proxy routes expose an explicit allowlist; admin endpoints are not forwarded. Authenticated API responses are non-cacheable.
 
-Before collecting real customer information or running a seller pilot, add authenticated seller accounts, database-backed order ownership, retention controls, and an appropriately protected customer intake flow. Do not treat browser storage as secure multi-user storage.
+Production Next.js responses include CSP, anti-framing, content-type, referrer, permissions, and HTTPS security headers. No claim is made that these controls replace a security review.
 
-## Validation
+## Before real customer rollout
+
+- Configure a custom SMTP provider in Neon Auth. The shared sender is for development/testing, with delivery limits.
+- Test email verification and reset delivery with your own inbox; delivery has not been independently verified here.
+- Confirm working NIPOST data and the permitted production access level.
+- Set a retention policy and operational backup/restore procedures; monitor errors and request limits.
+- Confirm the chosen hosting audience and Render workspace before creating a public service.
+
+No multi-staff roles, payments, rider GPS tracking, or automatic route optimisation are included. Orders are manually moved through dispatch/delivery states. The dashboard currently loads up to the latest 1,000 orders for the seller. Existing browser-only prototype records are not silently imported into the account database.
+
+## Checks
 
 ```sh
 npm run typecheck
 npm run test:postcode
-npm run build
+npm run test:security
+npm run build:next
 ```
 
-Tests cover code normalization, malformed codes, demo matching, upstream L1 requests, upstream failure handling, and ensuring live errors never silently fall back to demo data. Unit tests use mocked upstream responses. They do not establish that the external sandbox can resolve a postcode; that result remains pending.
+Postcode tests use controlled upstream responses. Security tests cover rejected ownership fields, invalid transitions, and unsafe return paths. When `DATABASE_URL` is supplied, they also exercise real PostgreSQL isolation, optimistic versions, status transitions, and throttling, with test authentication contexts and clearly synthetic QA orders. Test rows are retained instead of being deleted automatically. Separate HTTP checks exercised actual managed sign-up/login, HttpOnly cookies, sign-out, verification gating, origin rejection, and blocked admin proxy routes. Email delivery itself remains a launch check.
