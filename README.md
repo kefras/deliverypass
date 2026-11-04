@@ -4,6 +4,8 @@ A Next.js App Router prototype for Nigerian sellers: collect recipient details, 
 
 **Demo:** https://deliverypass-ng-prototype.racingtarragon.chatgpt.site/
 
+The hosted demo currently requires ChatGPT sign-in. Public access is awaiting explicit owner confirmation.
+
 **Status:** working prototype; successful end-to-end NIPOST sandbox validation remains unverified. Authenticated requests returned HTTP 200, but the five documented sandbox codes returned `valid:false` / `status:not_found`, and autocomplete returned empty suggestions during testing.
 
 ## Run locally
@@ -45,7 +47,7 @@ Say clearly that reduced delivery failures are a hypothesis to test with sellers
 
 ## Prototype boundaries
 
-Orders are saved in localStorage on the current browser; there is no database or cross-device order sharing. Reloading preserves orders when browser storage is available. Copy delivery note shares plain text through the clipboard; it does not send a message. Dispatch is a manual status update, not rider tracking. CSV export contains the currently filtered orders. The public hosted demo can be opened without login. Use fictional customer details only. There is no multi-seller account system, shared order database, or cross-device order access.
+Orders are saved in localStorage on the current browser; there is no database or cross-device order sharing. Reloading preserves orders when browser storage is available. Copy delivery note shares plain text through the clipboard; it does not send a message. Dispatch is a manual status update, not rider tracking. CSV export contains the currently filtered orders. The hosted demo currently requires ChatGPT sign-in. Use fictional customer details only. There is no multi-seller account system, shared order database, or cross-device order access.
 
 Before collecting real customer information or running a seller pilot, add authenticated seller accounts, database-backed order ownership, retention controls, and an appropriately protected customer intake flow. Do not treat browser storage as secure multi-user storage.
 
