@@ -21,6 +21,8 @@ For conventional Next.js, copy `.env.example` to `.env.local` and set your own k
 
 The server calls only `https://api.postcode.gov.ng`: autocomplete at `/v1/search/autocomplete` and basic L1 validation at `/v1/lookup`. The API key is sent through the `X-API-Key` header, never returned to the browser. L1 checks postcode validity only; street addresses and delivery instructions are entered by customers. Codes for test keys must come from the API sandbox dataset, which differs from live codes.
 
+With a `nipost_test_` key, the app displays **NIPOST sandbox** and saves checks as sandbox results. Use `FC-01-A01-KP-27` or `FC-01-A01-LR-01` to test. Existing demo orders retain their demo labels. With no key it remains in demo mode. Production checks use a live key after KYB approval.
+
 Official documentation: https://docs.postcode.gov.ng/quickstart
 Access levels: https://docs.postcode.gov.ng/concepts/lookup-levels
 

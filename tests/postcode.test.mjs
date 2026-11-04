@@ -29,6 +29,16 @@ test('demo and live route behaviour', async t=>{
  });
  await t.test('malformed code returns a useful client error',async()=>{const response=await GET(request('code=100001'));assert.equal(response.status,400);assert.match((await response.json()).error,/full postcode/);});
  await t.test('search returns only matching fixture codes',async()=>{const data=await (await GET(request('action=search&q=FC03'))).json();assert.equal(data.suggestions.length,1);assert.equal(data.suggestions[0].code,'FC-03-B06-AG-12');});
+ await t.test('NIPOST test credentials report sandbox while reaching the API',async()=>{
+  process.env.POSTCODE_API_KEY='nipost_test_placeholder';
+  const config=await(await GET(request('action=config'))).json();assert.equal(config.mode,'sandbox');
+  globalThis.fetch=async(url,options)=>{assert.equal(url.searchParams.get('code'),'FC-01-A01-KP-27');assert.equal(options.headers['X-API-Key'],'nipost_test_placeholder');return Response.json({data:{valid:true}});};
+  const result=await(await GET(request('code=FC01A01KP27'))).json();assert.equal(result.mode,'sandbox');assert.equal(result.valid,true);assert.equal(result.code,'FC-01-A01-KP-27');
+ });
+ await t.test('a rejected sandbox request never becomes a demo success',async()=>{
+  globalThis.fetch=async()=>new Response('',{status:403});
+  const response=await GET(request('code=LA11W06TC10'));const data=await response.json();assert.equal(response.status,502);assert.equal(data.mode,'sandbox');assert.equal(data.valid,undefined);
+ });
  process.env.POSTCODE_API_KEY='test-only-placeholder';
  await t.test('live lookup uses the documented host, server header, and free L1',async()=>{
   globalThis.fetch=async(url,options)=>{assert.equal(url.origin,'https://api.postcode.gov.ng');assert.equal(url.pathname,'/v1/lookup');assert.equal(url.searchParams.get('level'),'1');assert.equal(options.headers['X-API-Key'],'test-only-placeholder');return Response.json({data:{valid:true}});};

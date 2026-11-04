@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const action = params.get("action") ?? "lookup";
   const key = process.env.POSTCODE_API_KEY;
-  const mode = key ? "live" : "demo";
+  const mode = !key ? "demo" : /^nipost_(pk_)?test_/.test(key) ? "sandbox" : "live";
   if (action === "config") return json({mode});
   if (action !== "search" && action !== "lookup") return json({error:"Unsupported action."},400);
   const input = (params.get(action === "search" ? "q" : "code") ?? "").slice(0,80);
