@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/server";
+import { getAuth } from "@/lib/auth/server";
 import { ApiError,apiError,assertOrigin,rateLimit,readJson } from "@/lib/security";
 export const dynamic="force-dynamic";
 type Context={params:Promise<{path:string[]}>};
@@ -14,7 +14,7 @@ async function handle(request:Request,context:Context){try{
     const password=action==="sign-up/email"?body.password:["change-password","reset-password"].includes(action)?body.newPassword:undefined;
     if(["sign-up/email","change-password","reset-password"].includes(action)&&(typeof password!=="string"||password.length<12||password.length>128))throw new ApiError(400,"Use a password between 12 and 128 characters.");
   }
-  const handlers=auth.handler();
+  const handlers=getAuth().handler();
   const response=await (request.method==="GET"?handlers.GET:handlers.POST)(request,context);
   response.headers.set("Cache-Control","no-store, private");
   return response;

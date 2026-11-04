@@ -1,13 +1,13 @@
 import "server-only";
 import { createHmac } from "node:crypto";
 import { ZodError } from "zod";
-import { auth } from "@/lib/auth/server";
+import { getAuth } from "@/lib/auth/server";
 import { database } from "@/lib/db";
 export class ApiError extends Error{constructor(public status:number,message:string){super(message);}}
 export const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store, private","X-Content-Type-Options":"nosniff"}});
 export function apiError(error:unknown){if(error instanceof ApiError)return json({error:error.message},error.status);if(error instanceof ZodError)return json({error:"Check the supplied fields and try again."},400);return json({error:"The request could not be completed. Please try again."},503);}
 export async function currentUser(verified=true){
-  const {data:session}=await auth.getSession({query:{disableCookieCache:"true"}});
+  const {data:session}=await getAuth().getSession({query:{disableCookieCache:"true"}});
   if(!session?.user)throw new ApiError(401,"Please sign in to continue.");
   if(verified&&!session.user.emailVerified)throw new ApiError(403,"Verify your email before accessing your workspace.");
   return session.user;

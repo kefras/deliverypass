@@ -13,7 +13,7 @@ test('input validation rejects forged ownership and unsafe status changes',()=>{
 });
 test('database-backed ownership, versions, lifecycle and request limits',{skip:!process.env.DATABASE_URL},async()=>{
  const dbUrl=moduleUrl(source('lib/db.ts').replace('"@neondatabase/serverless"',JSON.stringify(import.meta.resolve('@neondatabase/serverless'))));
- const authUrl=moduleUrl('export const auth={getSession:async()=>({data:globalThis.__deliverypassTestSession??null})};');
+ const authUrl=moduleUrl('export const getAuth=()=>({getSession:async()=>({data:globalThis.__deliverypassTestSession??null})});');
  const secUrl=moduleUrl(source('lib/security.ts').replace('"zod"',JSON.stringify(import.meta.resolve('zod'))).replace('@/lib/auth/server',authUrl).replace('@/lib/db',dbUrl));
  const deliveryUrl=moduleUrl(source('lib/delivery.ts'));
  const storeUrl=moduleUrl(source('lib/order-store.ts').replace('@/lib/db',dbUrl));
